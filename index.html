@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PERSONA — Advanced AI Marketing Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#05050a;
+  --s1:#0c0c14;
+  --s2:#13131e;
+  --border:#1c1c2e;
+  --border2:#252538;
+  --a1:#6c63ff;
+  --a2:#ff4d8b;
+  --a3:#00f5c8;
+  --a4:#ffd166;
+  --text:#eeeaf8;
+  --muted:#5a5878;
+  --muted2:#8882aa;
+  --fd:'Syne',sans-serif;
+  --fb:'Instrument Serif',serif;
+  --fm:'JetBrains Mono',monospace;
+  --r:6px;
+}
+
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fd);min-height:100vh;overflow-x:hidden}
+
+/* ── Grid bg ── */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(108,99,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(108,99,255,.03) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(108,99,255,.06),transparent);
+}
+
+/* ── Cursor aura ── */
+#aura{position:fixed;width:500px;height:500px;border-radius:50%;pointer-events:none;z-index:1;
+  background:radial-gradient(circle,rgba(108,99,255,.05) 0%,transparent 65%);
+  transform:translate(-50%,-50%);transition:left .1s,top .1s}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px;position:relative;z-index:2}
+
+/* ── Header ── */
+header{padding:20px 0;border-bottom:1px solid var(--border)}
+.hdr{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.logo{font-size:1.4rem;font-weight:800;letter-spacing:.18em;display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--a1),var(--a2));
+  display:flex;align-items:center;justify-content:center;font-size:.9rem;border-radius:var(--r)}
+.logo sub{font-size:.55rem;font-family:var(--fm);color:var(--muted);letter-spacing:.12em;vertical-align:middle;margin-left:4px;font-weight:300}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--border2);
+  padding:6px 14px;border-radius:999px;font-family:var(--fm);font-size:.68rem;color:var(--muted2)}
+.dot-pulse{width:7px;height:7px;border-radius:50%;background:var(--a3);box-shadow:0 0 8px var(--a3);animation:pulse 2s infinite}
+.badge-seg{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--a1);
+  padding:5px 12px;border-radius:999px;font-family:var(--fm);font-size:.68rem;color:var(--a1)}
+
+/* ── Hero ── */
+.hero{padding:60px 0 48px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;border-bottom:1px solid var(--border)}
+.hero-l .eyebrow{font-family:var(--fm);font-size:.65rem;letter-spacing:.22em;color:var(--a1);margin-bottom:16px;text-transform:uppercase}
+.hero-l h1{font-size:clamp(2.8rem,5.5vw,4.5rem);font-weight:800;line-height:1;letter-spacing:-.01em;margin-bottom:18px}
+.hero-l h1 .grad{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-l p{font-size:.88rem;color:var(--muted2);line-height:1.8;max-width:380px}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat-box{background:var(--s1);border:1px solid var(--border2);padding:20px;border-radius:var(--r);position:relative;overflow:hidden}
+.stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2));opacity:.5}
+.stat-num{font-size:2rem;font-weight:800;color:var(--a3);line-height:1}
+.stat-lbl{font-family:var(--fm);font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;margin-top:4px}
+.stat-sub{font-size:.72rem;color:var(--muted2);margin-top:6px}
+
+/* ── Sections ── */
+.sec{padding:44px 0;border-bottom:1px solid var(--border)}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:28px}
+.sec-num{font-family:var(--fm);font-size:.6rem;color:var(--a1);background:rgba(108,99,255,.12);
+  border:1px solid rgba(108,99,255,.25);padding:3px 9px;border-radius:999px;letter-spacing:.12em;white-space:nowrap}
+.sec-title{font-size:1.4rem;font-weight:700;letter-spacing:.02em}
+.sec-head::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+
+/* ── Category Grid ── */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.cat{background:var(--s1);border:1px solid var(--border2);padding:22px 16px;cursor:pointer;
+  border-radius:var(--r);transition:all .2s;position:relative;overflow:hidden;user-select:none}
+.cat::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,99,255,.1),transparent);opacity:0;transition:opacity .25s}
+.cat:hover{border-color:var(--a1);transform:translateY(-3px)}
+.cat:hover::after{opacity:1}
+.cat.lit{border-color:var(--a1);background:rgba(108,99,255,.08)}
+.cat.lit .cnt{opacity:1;transform:scale(1)}
+.cat-emoji{font-size:1.8rem;margin-bottom:10px;display:block}
+.cat-name{font-size:.95rem;font-weight:700;letter-spacing:.04em}
+.cat-brand{font-size:.65rem;color:var(--muted);margin-top:3px;font-family:var(--fm)}
+.cnt{position:absolute;top:8px;right:8px;background:var(--a1);color:#fff;
+  font-family:var(--fm);font-size:.6rem;width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.5);transition:all .3s}
+
+/* ── Pref Bars ── */
+.pref-grid{display:flex;flex-direction:column;gap:10px}
+.prow{display:flex;align-items:center;gap:14px}
+.plbl{font-family:var(--fm);font-size:.65rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.1em;width:100px;flex-shrink:0}
+.ptrack{flex:1;height:5px;background:var(--s2);border-radius:999px;overflow:hidden}
+.pfill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--a1),var(--a2));width:0%;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.pval{font-family:var(--fm);font-size:.65rem;color:var(--a1);width:20px;text-align:right}
+
+/* ── Log ── */
+.log-row{margin-top:24px}
+.log-lbl{font-family:var(--fm);font-size:.6rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:10px}
+.log-tags{display:flex;flex-wrap:wrap;gap:6px}
+.ltag{font-family:var(--fm);font-size:.65rem;border:1px solid var(--border2);background:var(--s1);
+  padding:4px 10px;border-radius:4px;color:var(--muted2);animation:fadein .3s}
+.ltag.fresh{border-color:var(--a3);color:var(--a3)}
+
+/* ── Generate Button ── */
+.gen-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.gen-btn{display:inline-flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--a1),var(--a2));
+  color:#fff;font-family:var(--fd);font-size:1rem;font-weight:700;letter-spacing:.1em;
+  padding:16px 36px;border:none;cursor:pointer;border-radius:var(--r);position:relative;overflow:hidden;
+  transition:transform .15s,box-shadow .2s}
+.gen-btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(108,99,255,.35)}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.gen-btn .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
+  border-radius:50%;animation:spin .7s linear infinite;display:none}
+.gen-btn.loading .spin{display:block}
+.gen-btn.loading .btxt{opacity:.6}
+.gen-hint{font-family:var(--fm);font-size:.68rem;color:var(--muted)}
+
+/* ── Output section ── */
+#out-sec{display:none}
+.out-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+
+/* ── Tabs ── */
+.tab-nav{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px;background:var(--s1);
+  border:1px solid var(--border2);padding:6px;border-radius:var(--r)}
+.tab-btn{display:flex;align-items:center;gap:7px;background:transparent;border:none;
+  padding:8px 16px;border-radius:4px;cursor:pointer;font-family:var(--fd);font-size:.78rem;
+  font-weight:600;color:var(--muted2);transition:all .2s;white-space:nowrap}
+.tab-btn:hover{color:var(--text);background:var(--s2)}
+.tab-btn.on{background:rgba(108,99,255,.15);color:var(--a1);border:1px solid rgba(108,99,255,.2)}
+.tab-icon{font-size:.9rem}
+
+.tab-pane{display:none;animation:fadein .3s}
+.tab-pane.on{display:block}
+
+/* ── Promo Card ── */
+.promo-card{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.promo-top{height:4px;background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3))}
+.promo-inner{padding:32px}
+.promo-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,77,139,.15);
+  border:1px solid rgba(255,77,139,.3);padding:5px 14px;border-radius:999px;
+  font-family:var(--fm);font-size:.62rem;letter-spacing:.18em;color:var(--a2);margin-bottom:18px;
+  animation:blink 1.8s step-end infinite}
+.promo-badge span{width:6px;height:6px;background:var(--a2);border-radius:50%}
+.promo-hl{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:800;line-height:1.05;margin-bottom:14px;letter-spacing:-.01em}
+.promo-sub{font-size:.88rem;color:var(--muted2);line-height:1.75;font-family:var(--fb);font-style:italic;margin-bottom:10px}
+.promo-expiry{font-family:var(--fm);font-size:.68rem;color:var(--a4);margin-bottom:24px}
+.promo-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.btn-cta{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--a1),var(--a2));
+  color:#fff;border:none;padding:12px 28px;border-radius:var(--r);font-family:var(--fd);
+  font-size:.88rem;font-weight:700;cursor:pointer;transition:transform .15s}
+.btn-cta:hover{transform:scale(1.03)}
+.btn-copy{display:inline-flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border2);
+  color:var(--muted2);padding:11px 18px;border-radius:var(--r);font-family:var(--fm);
+  font-size:.68rem;cursor:pointer;transition:all .2s}
+.btn-copy:hover{border-color:var(--a3);color:var(--a3)}
+.btn-copy.copied{border-color:var(--a3);color:var(--a3)}
+
+/* AB toggle */
+.ab-row{display:flex;gap:8px;margin-bottom:16px;align-items:center}
+.ab-lbl{font-family:var(--fm);font-size:.62rem;color:var(--muted);margin-right:4px;letter-spacing:.12em;text-transform:uppercase}
+.ab-btn{font-family:var(--fm);font-size:.68rem;padding:5px 14px;border-radius:4px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--s2);color:var(--muted2);transition:all .2s}
+.ab-btn.on{border-color:var(--a1);background:rgba(108,99,255,.15);color:var(--a1)}
+
+/* ── Discount Block (right panel) ── */
+.side-panel{display:flex;flex-direction:column;gap:14px}
+.disc-card{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:28px;text-align:center}
+.disc-circle{width:120px;height:120px;border-radius:50%;background:conic-gradient(var(--a1) 0%,var(--a2) 100%);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 16px;position:relative}
+.disc-circle::before{content:'';position:absolute;width:88px;height:88px;background:var(--s1);border-radius:50%}
+.disc-num{position:relative;font-size:1.6rem;font-weight:800;color:var(--a1)}
+.disc-brand{font-size:.85rem;font-weight:700;margin-bottom:4px}
+.disc-save{font-family:var(--fm);font-size:.7rem;color:var(--a3)}
+
+/* Segment card */
+.seg-card{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:22px}
+.seg-top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.seg-icon{width:40px;height:40px;background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.25);
+  border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.seg-name{font-weight:700;font-size:.95rem}
+.seg-type{font-family:var(--fm);font-size:.6rem;color:var(--a1);letter-spacing:.1em;text-transform:uppercase}
+.seg-desc{font-size:.78rem;color:var(--muted2);line-height:1.65}
+
+/* Score cards */
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:16px}
+.sc-val{font-size:1.6rem;font-weight:800}
+.sc-val.purple{color:var(--a1)}
+.sc-val.pink{color:var(--a2)}
+.sc-val.teal{color:var(--a3)}
+.sc-lbl{font-family:var(--fm);font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px}
+.sc-bar{height:3px;background:var(--s2);border-radius:999px;margin-top:10px;overflow:hidden}
+.sc-fill{height:100%;border-radius:999px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+
+/* ── Email Tab ── */
+.email-card{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden}
+.email-hdr{background:var(--s2);padding:16px 20px;border-bottom:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.email-dots{display:flex;gap:6px}
+.email-dots span{width:10px;height:10px;border-radius:50%}
+.email-dots span:nth-child(1){background:#ff5f57}
+.email-dots span:nth-child(2){background:#ffbc2e}
+.email-dots span:nth-child(3){background:#28c840}
+.email-subject-line{font-family:var(--fm);font-size:.72rem;color:var(--muted2);flex:1;text-align:center}
+.email-body-wrap{padding:24px}
+.email-field{margin-bottom:16px}
+.email-field label{font-family:var(--fm);font-size:.6rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;display:block}
+.email-field .val{font-size:.88rem;color:var(--text);line-height:1.7}
+.email-field .val.subj{font-weight:700;font-size:.95rem}
+.email-preview{font-size:.78rem;color:var(--muted2);font-style:italic}
+
+/* ── WhatsApp Tab ── */
+.wa-phone{background:linear-gradient(180deg,#075e54,#128c7e);border-radius:16px;padding:20px;max-width:360px;margin:0 auto}
+.wa-msg{background:#dcf8c6;color:#111;border-radius:0 12px 12px 12px;padding:14px 16px;
+  font-size:.85rem;line-height:1.7;position:relative;margin-top:12px}
+.wa-msg::before{content:'';position:absolute;top:0;left:-8px;width:0;height:0;
+  border-top:8px solid #dcf8c6;border-left:8px solid transparent}
+.wa-time{font-size:.6rem;color:#667;text-align:right;margin-top:6px;font-family:var(--fm)}
+.wa-sender{font-family:var(--fm);font-size:.65rem;color:rgba(255,255,255,.7);margin-bottom:8px}
+
+/* ── Instagram Tab ── */
+.ig-card{background:#000;border:1px solid #222;border-radius:12px;max-width:400px;overflow:hidden}
+.ig-hdr{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #111}
+.ig-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.ig-handle{font-size:.78rem;font-weight:700;color:#fff}
+.ig-follow{margin-left:auto;font-size:.72rem;color:#0095f6;font-weight:600;cursor:pointer}
+.ig-img{height:200px;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);
+  display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative}
+.ig-img-overlay{position:absolute;inset:0;background:linear-gradient(transparent,rgba(0,0,0,.5));display:flex;align-items:flex-end;padding:14px}
+.story-txt{font-size:1.4rem;font-weight:800;color:#fff;letter-spacing:.02em;line-height:1.1}
+.ig-body{padding:14px 16px}
+.ig-actions{display:flex;gap:14px;margin-bottom:10px;font-size:1.2rem}
+.ig-caption{font-size:.82rem;color:#ddd;line-height:1.65}
+.ig-caption .handle{font-weight:700;color:#fff}
+.ig-hashtags{color:#00b4ff;font-size:.78rem}
+
+/* ── Products Tab ── */
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.prod{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);overflow:hidden;transition:transform .2s,border-color .2s}
+.prod:hover{transform:translateY(-3px);border-color:var(--a1)}
+.prod-img{height:120px;background:linear-gradient(135deg,var(--s2),var(--bg));
+  display:flex;align-items:center;justify-content:center;font-size:2.5rem;position:relative}
+.prod-tag-badge{position:absolute;top:10px;right:10px;font-family:var(--fm);font-size:.58rem;
+  letter-spacing:.12em;padding:4px 10px;border-radius:4px;font-weight:500}
+.prod-tag-badge.BESTSELLER{background:rgba(255,209,102,.15);border:1px solid rgba(255,209,102,.35);color:var(--a4)}
+.prod-tag-badge.TRENDING{background:rgba(255,77,139,.12);border:1px solid rgba(255,77,139,.3);color:var(--a2)}
+.prod-tag-badge.NEW{background:rgba(0,245,200,.1);border:1px solid rgba(0,245,200,.25);color:var(--a3)}
+.prod-tag-badge.STAFF{background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.25);color:var(--a1)}
+.prod-body{padding:16px}
+.prod-cat{font-family:var(--fm);font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
+.prod-name{font-weight:700;font-size:.9rem;margin-bottom:8px;line-height:1.3}
+.prod-price-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.prod-orig{font-family:var(--fm);font-size:.7rem;color:var(--muted);text-decoration:line-through}
+.prod-disc{font-family:var(--fm);font-size:.88rem;color:var(--a3);font-weight:500}
+.prod-stars{display:flex;align-items:center;gap:5px;font-family:var(--fm);font-size:.65rem;color:var(--a4)}
+.prod-reason{font-size:.72rem;color:var(--muted2);margin-top:8px;line-height:1.55;font-family:var(--fb);font-style:italic}
+.prod-add{width:100%;background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.2);
+  color:var(--a1);padding:9px;border-radius:4px;font-family:var(--fd);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;margin-top:12px}
+.prod-add:hover{background:var(--a1);color:#fff}
+
+/* ── Insights Tab ── */
+.ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.ins-box{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:20px}
+.ins-label{font-family:var(--fm);font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;margin-bottom:8px}
+.ins-val{font-size:.9rem;font-weight:600;line-height:1.5;color:var(--text)}
+.ins-val.hl{color:var(--a3);font-family:var(--fm)}
+.trigger-badge{display:inline-block;background:rgba(255,77,139,.12);border:1px solid rgba(255,77,139,.25);
+  padding:4px 12px;border-radius:999px;font-size:.72rem;color:var(--a2);font-family:var(--fm)}
+.ins-full{background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:20px;margin-bottom:14px}
+.upsell-strip{background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.2);
+  border-radius:var(--r);padding:16px 20px;display:flex;gap:12px;align-items:flex-start}
+.upsell-icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.upsell-txt{font-size:.82rem;color:var(--muted2);line-height:1.65}
+.upsell-txt strong{color:var(--a4);font-weight:600}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:var(--s2);
+  border:1px solid var(--border2);border-left:3px solid var(--a3);padding:11px 18px;
+  font-family:var(--fm);font-size:.72rem;color:var(--text);transform:translateY(80px);opacity:0;
+  transition:all .3s;pointer-events:none;border-radius:var(--r);max-width:300px}
+#toast.show{transform:translateY(0);opacity:1}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .hero{grid-template-columns:1fr;gap:28px}
+  .out-grid{grid-template-columns:1fr}
+  .side-panel{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .ins-grid{grid-template-columns:1fr}
+  .score-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:480px){
+  .tab-btn{padding:7px 12px;font-size:.72rem}
+  .side-panel{grid-template-columns:1fr}
+}
+
+/* ── Keyframes ── */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes countup{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="aura"></div>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+<header>
+  <div class="wrap">
+    <div class="hdr">
+      <div class="logo">
+        <div class="logo-icon">P</div>
+        PERSONA <sub>AI MARKETING ENGINE v2</sub>
+      </div>
+      <div class="hdr-right">
+        <div class="pill"><span class="dot-pulse"></span><span id="uid-lbl">USER-XXXXX</span></div>
+        <div class="badge-seg" id="seg-badge">⚡ Detecting…</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ HERO ══════════════════════════════════════════════════ -->
+<div class="wrap">
+<div class="hero">
+  <div class="hero-l">
+    <div class="eyebrow">// REAL-TIME BEHAVIORAL PERSONALIZATION</div>
+    <h1>Turn <span class="grad">Clicks</span><br>Into Converts</h1>
+    <p>Watch the AI analyze your browsing in real-time — generating 8 different personalized marketing outputs tailored exactly to you.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="stat-box">
+      <div class="stat-num" id="s-events">0</div>
+      <div class="stat-lbl">Events Tracked</div>
+      <div class="stat-sub" id="s-engage">cold lead</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="s-cats">0</div>
+      <div class="stat-lbl">Categories</div>
+      <div class="stat-sub" id="s-div">diversity 0%</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="s-top">—</div>
+      <div class="stat-lbl">Top Interest</div>
+      <div class="stat-sub" id="s-brand">no data</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="s-offers">0</div>
+      <div class="stat-lbl">Offers Generated</div>
+      <div class="stat-sub">AI personalized</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STEP 1: CATEGORIES ════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-head"><span class="sec-num">01 / BROWSE</span><span class="sec-title">Click Categories to Signal Intent</span></div>
+  <div class="cat-grid" id="cat-grid"></div>
+</div>
+
+<!-- ═══ STEP 2: PROFILE ═══════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-head"><span class="sec-num">02 / PROFILE</span><span class="sec-title">Your Real-Time Preference Model</span></div>
+  <div class="pref-grid" id="pref-grid">
+    <p style="font-family:var(--fm);font-size:.72rem;color:var(--muted)">[ no data — click categories above ]</p>
+  </div>
+  <div class="log-row">
+    <div class="log-lbl">// live event stream</div>
+    <div class="log-tags" id="log-tags"><span style="font-family:var(--fm);font-size:.65rem;color:var(--muted)">— empty —</span></div>
+  </div>
+</div>
+
+<!-- ═══ STEP 3: GENERATE ══════════════════════════════════════ -->
+<div class="sec">
+  <div class="sec-head"><span class="sec-num">03 / GENERATE</span><span class="sec-title">Run AI Personalization Engine</span></div>
+  <div class="gen-wrap">
+    <button class="gen-btn" id="gen-btn" onclick="runGenerate()">
+      <span class="spin"></span>
+      <span class="btxt">✦ GENERATE ALL OUTPUTS</span>
+    </button>
+    <div class="gen-hint">Generates 8 outputs: Promo · A/B · Email · WhatsApp · Instagram · Products · Insights</div>
+  </div>
+</div>
+
+<!-- ═══ STEP 4: OUTPUTS ═══════════════════════════════════════ -->
+<div class="sec" id="out-sec">
+  <div class="sec-head"><span class="sec-num">04 / OUTPUTS</span><span class="sec-title">AI-Generated Marketing Package</span></div>
+
+  <div class="out-grid">
+    <!-- LEFT: Tabs -->
+    <div>
+      <div class="tab-nav" id="tab-nav">
+        <button class="tab-btn on" data-tab="promo"><span class="tab-icon">🎯</span> Promo Card</button>
+        <button class="tab-btn" data-tab="email"><span class="tab-icon">📧</span> Email</button>
+        <button class="tab-btn" data-tab="whatsapp"><span class="tab-icon">💬</span> WhatsApp</button>
+        <button class="tab-btn" data-tab="instagram"><span class="tab-icon">📸</span> Instagram</button>
+        <button class="tab-btn" data-tab="products"><span class="tab-icon">🛍️</span> Products</button>
+        <button class="tab-btn" data-tab="insights"><span class="tab-icon">🧠</span> AI Insights</button>
+      </div>
+
+      <!-- TAB: Promo -->
+      <div class="tab-pane on" id="tab-promo">
+        <div class="ab-row">
+          <span class="ab-lbl">A/B VARIANT:</span>
+          <button class="ab-btn on" id="ab-a" onclick="switchAB('a')">Variant A</button>
+          <button class="ab-btn" id="ab-b" onclick="switchAB('b')">Variant B</button>
+        </div>
+        <div class="promo-card">
+          <div class="promo-top"></div>
+          <div class="promo-inner">
+            <div class="promo-badge"><span></span><span id="p-badge">HOT</span></div>
+            <div class="promo-hl" id="p-hl">Headline</div>
+            <div class="promo-sub" id="p-sub">Subtext loads here.</div>
+            <div class="promo-expiry" id="p-expiry">⏱ —</div>
+            <div class="promo-actions">
+              <button class="btn-cta" id="p-cta-btn">Shop Now →</button>
+              <button class="btn-copy" onclick="copyField('promo-copy')">📋 Copy</button>
+            </div>
+          </div>
+        </div>
+        <textarea id="promo-copy" style="display:none"></textarea>
+      </div>
+
+      <!-- TAB: Email -->
+      <div class="tab-pane" id="tab-email">
+        <div class="email-card">
+          <div class="email-hdr">
+            <div class="email-dots"><span></span><span></span><span></span></div>
+            <div class="email-subject-line" id="em-subj-preview">Subject line</div>
+            <button class="btn-copy" onclick="copyField('email-copy')">📋 Copy</button>
+          </div>
+          <div class="email-body-wrap">
+            <div class="email-field">
+              <label>Subject</label>
+              <div class="val subj" id="em-subj">—</div>
+            </div>
+            <div class="email-field">
+              <label>Preview Text</label>
+              <div class="val email-preview" id="em-prev">—</div>
+            </div>
+            <div class="email-field">
+              <label>Email Body</label>
+              <div class="val" id="em-body">—</div>
+            </div>
+          </div>
+        </div>
+        <textarea id="email-copy" style="display:none"></textarea>
+      </div>
+
+      <!-- TAB: WhatsApp -->
+      <div class="tab-pane" id="tab-whatsapp">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button class="btn-copy" onclick="copyField('wa-copy')">📋 Copy Message</button>
+        </div>
+        <div class="wa-phone">
+          <div class="wa-sender">📱 persona_deals</div>
+          <div class="wa-msg" id="wa-msg">Loading...</div>
+          <div class="wa-time" id="wa-time">now · ✓✓</div>
+        </div>
+        <textarea id="wa-copy" style="display:none"></textarea>
+      </div>
+
+      <!-- TAB: Instagram -->
+      <div class="tab-pane" id="tab-instagram">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button class="btn-copy" onclick="copyField('ig-copy')">📋 Copy Caption</button>
+        </div>
+        <div class="ig-card">
+          <div class="ig-hdr">
+            <div class="ig-avatar">P</div>
+            <div><div class="ig-handle">persona.deals</div><div style="font-size:.65rem;color:#888;font-family:var(--fm)">Sponsored</div></div>
+            <span class="ig-follow">Follow</span>
+          </div>
+          <div class="ig-img">
+            <span id="ig-emoji">🛍️</span>
+            <div class="ig-img-overlay">
+              <div class="story-txt" id="ig-story">HOT DEAL</div>
+            </div>
+          </div>
+          <div class="ig-body">
+            <div class="ig-actions">❤️ 🔁 ✈️</div>
+            <div class="ig-caption" id="ig-cap">Caption loads here</div>
+          </div>
+        </div>
+        <textarea id="ig-copy" style="display:none"></textarea>
+      </div>
+
+      <!-- TAB: Products -->
+      <div class="tab-pane" id="tab-products">
+        <div class="prod-grid" id="prod-grid">
+          <!-- injected -->
+        </div>
+      </div>
+
+      <!-- TAB: Insights -->
+      <div class="tab-pane" id="tab-insights">
+        <div class="ins-grid">
+          <div class="ins-box">
+            <div class="ins-label">Personalization Score</div>
+            <div class="ins-val hl" id="i-pscore" style="font-size:1.8rem;font-weight:800">—</div>
+            <div class="sc-bar" style="margin-top:10px"><div class="sc-fill" id="i-pbar" style="background:linear-gradient(90deg,var(--a1),var(--a3));width:0%"></div></div>
+          </div>
+          <div class="ins-box">
+            <div class="ins-label">Conversion Probability</div>
+            <div class="ins-val" id="i-conv" style="font-size:1.8rem;font-weight:800;color:var(--a2)">—</div>
+            <div class="sc-bar" style="margin-top:10px"><div class="sc-fill" id="i-cbar" style="background:linear-gradient(90deg,var(--a2),var(--a4));width:0%"></div></div>
+          </div>
+          <div class="ins-box">
+            <div class="ins-label">Best Send Time</div>
+            <div class="ins-val hl" id="i-time">—</div>
+          </div>
+          <div class="ins-box">
+            <div class="ins-label">Psychological Trigger</div>
+            <div id="i-trigger"><span class="trigger-badge">—</span></div>
+          </div>
+        </div>
+        <div class="ins-full">
+          <div class="ins-label" style="margin-bottom:10px">Segment Analysis</div>
+          <div class="ins-val" id="i-segnote" style="font-size:.85rem;color:var(--muted2);line-height:1.75">—</div>
+        </div>
+        <div class="upsell-strip">
+          <div class="upsell-icon">💡</div>
+          <div class="upsell-txt"><strong>Upsell Opportunity:</strong> <span id="i-upsell">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Side panel -->
+    <div class="side-panel" id="side-panel">
+      <div class="disc-card">
+        <div class="disc-circle"><div class="disc-num" id="sp-disc">—</div></div>
+        <div class="disc-brand" id="sp-brand">—</div>
+        <div class="disc-save" id="sp-save">saving ₹—</div>
+      </div>
+      <div class="seg-card">
+        <div class="seg-top">
+          <div class="seg-icon" id="sp-seg-icon">⚡</div>
+          <div><div class="seg-name" id="sp-seg-name">—</div><div class="seg-type">BUYER SEGMENT</div></div>
+        </div>
+        <div class="seg-desc" id="sp-seg-desc">—</div>
+      </div>
+      <div class="score-grid">
+        <div class="sc">
+          <div class="sc-val purple" id="sp-score">—</div>
+          <div class="sc-lbl">AI Score</div>
+          <div class="sc-bar"><div class="sc-fill" id="sp-sbar" style="background:var(--a1);width:0%"></div></div>
+        </div>
+        <div class="sc">
+          <div class="sc-val pink" id="sp-conv">—</div>
+          <div class="sc-lbl">Convert %</div>
+          <div class="sc-bar"><div class="sc-fill" id="sp-cbar" style="background:var(--a2);width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /out-grid -->
+</div><!-- /out-sec -->
+</div><!-- /wrap -->
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════
+const API = '/api';
+const USER_ID = 'usr-' + Math.random().toString(36).slice(2,7).toUpperCase();
+document.getElementById('uid-lbl').textContent = USER_ID;
+
+const CATS = [
+  {id:'sports',     icon:'🏃', name:'Sports',      brand:'Nike · Adidas',     emoji:'👟'},
+  {id:'electronics',icon:'📱', name:'Electronics', brand:'Apple · Sony',      emoji:'📱'},
+  {id:'fashion',    icon:'👗', name:'Fashion',     brand:'Zara · Levi\'s',    emoji:'👗'},
+  {id:'shoes',      icon:'👟', name:'Shoes',       brand:'Nike · Vans',       emoji:'👟'},
+  {id:'beauty',     icon:'✨', name:'Beauty',      brand:'MAC · L\'Oréal',    emoji:'💄'},
+  {id:'home',       icon:'🏠', name:'Home',        brand:'IKEA · Dyson',      emoji:'🏠'},
+  {id:'gaming',     icon:'🎮', name:'Gaming',      brand:'PS5 · Razer',       emoji:'🎮'},
+  {id:'travel',     icon:'✈️', name:'Travel',      brand:'GoPro · Samsonite', emoji:'✈️'},
+];
+
+// State
+let clicks = {};
+let totalEvents = 0;
+let lastOffer = null;
+let currentAB = 'a';
+let freshTag = null;
+let offersGenerated = 0;
+
+// ══════════════════════════════════════════════════
+// BUILD CATEGORY GRID
+// ══════════════════════════════════════════════════
+const catGrid = document.getElementById('cat-grid');
+CATS.forEach(c => {
+  const d = document.createElement('div');
+  d.className = 'cat'; d.id = 'c-' + c.id;
+  d.innerHTML = `
+    <span class="cat-emoji">${c.icon}</span>
+    <div class="cat-name">${c.name}</div>
+    <div class="cat-brand">${c.brand}</div>
+    <div class="cnt" id="cnt-${c.id}">0</div>`;
+  d.addEventListener('click', () => track(c.id));
+  catGrid.appendChild(d);
+});
+
+// ══════════════════════════════════════════════════
+// TRACK EVENT
+// ══════════════════════════════════════════════════
+async function track(cat) {
+  clicks[cat] = (clicks[cat] || 0) + 1;
+  totalEvents++;
+
+  // Optimistic UI
+  document.getElementById('s-events').textContent = totalEvents;
+  document.getElementById('cnt-' + cat).textContent = clicks[cat];
+  document.getElementById('c-' + cat).classList.add('lit');
+  updateStats();
+  updatePrefBars();
+  addTag(cat);
+
+  try {
+    const r = await fetch(`${API}/track-event`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({user_id: USER_ID, category: cat})
+    });
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    if (d.segment) updateSegBadge(d.segment);
+    toast(`📡 Tracked: ${cat} ×${clicks[cat]}`);
+  } catch {
+    toast('⚠️ Demo mode — backend not connected', true);
+  }
+}
+
+function updateStats() {
+  const cats = Object.keys(clicks).length;
+  document.getElementById('s-cats').textContent = cats;
+
+  // engagement
+  const e = totalEvents === 0 ? 'cold lead'
+    : totalEvents <= 2 ? 'warm lead'
+    : totalEvents <= 6 ? '🔥 hot lead'
+    : '⚡ super engaged';
+  document.getElementById('s-engage').textContent = e;
+
+  // diversity
+  const vals = Object.values(clicks);
+  const total = vals.reduce((a,b)=>a+b,0);
+  let entropy = 0;
+  vals.forEach(v => { const p = v/total; entropy -= p * Math.log2(p); });
+  const maxE = cats > 1 ? Math.log2(cats) : 1;
+  const div = cats > 1 ? Math.round(entropy / maxE * 100) : 0;
+  document.getElementById('s-div').textContent = `diversity ${div}%`;
+
+  // top interest
+  const sorted = Object.entries(clicks).sort((a,b)=>b[1]-a[1]);
+  if (sorted.length) {
+    const top = sorted[0][0];
+    const meta = CATS.find(c => c.id === top);
+    document.getElementById('s-top').textContent = meta?.icon + ' ' + (meta?.name || top);
+    document.getElementById('s-brand').textContent = meta?.brand || '';
+  }
+
+  document.getElementById('s-offers').textContent = offersGenerated;
+}
+
+function updateSegBadge(seg) {
+  document.getElementById('seg-badge').textContent = '⚡ ' + seg;
+}
+
+function updatePrefBars() {
+  const g = document.getElementById('pref-grid');
+  const max = Math.max(...Object.values(clicks));
+  const sorted = Object.entries(clicks).sort((a,b)=>b[1]-a[1]);
+  g.innerHTML = '';
+  sorted.forEach(([cat, count]) => {
+    const meta = CATS.find(c => c.id === cat);
+    const pct = Math.round(count/max*100);
+    const row = document.createElement('div');
+    row.className = 'prow';
+    row.innerHTML = `
+      <div class="plbl">${meta?.icon || ''} ${meta?.name || cat}</div>
+      <div class="ptrack"><div class="pfill" style="width:${pct}%"></div></div>
+      <div class="pval">${count}</div>`;
+    g.appendChild(row);
+  });
+}
+
+function addTag(cat) {
+  const tl = document.getElementById('log-tags');
+  if (tl.querySelector('span')) tl.innerHTML = '';
+  if (freshTag) freshTag.classList.remove('fresh');
+  const meta = CATS.find(c => c.id === cat);
+  const t = document.createElement('div');
+  t.className = 'ltag fresh';
+  t.textContent = `${meta?.icon||''} ${meta?.name||cat} ×${clicks[cat]}`;
+  tl.prepend(t);
+  freshTag = t;
+}
+
+// ══════════════════════════════════════════════════
+// GENERATE OFFER
+// ══════════════════════════════════════════════════
+async function runGenerate() {
+  if (!totalEvents) { toast('⚠️ Click some categories first!', true); return; }
+
+  const btn = document.getElementById('gen-btn');
+  btn.classList.add('loading'); btn.disabled = true;
+  document.getElementById('out-sec').style.display = 'none';
+
+  try {
+    const r = await fetch(`${API}/generate-offer/${USER_ID}`);
+    if (!r.ok) throw new Error(await r.text());
+    const d = await r.json();
+    lastOffer = d;
+    currentAB = 'a';
+    renderAll(d);
+    offersGenerated++;
+    document.getElementById('s-offers').textContent = offersGenerated;
+    document.getElementById('out-sec').style.display = 'block';
+    document.getElementById('out-sec').scrollIntoView({behavior:'smooth'});
+    setTab('promo');
+    toast('✦ 8 personalized outputs generated!');
+  } catch (e) {
+    renderDemo();
+    offersGenerated++;
+    document.getElementById('s-offers').textContent = offersGenerated;
+    document.getElementById('out-sec').style.display = 'block';
+    document.getElementById('out-sec').scrollIntoView({behavior:'smooth'});
+    toast('⚠️ Demo outputs shown — connect Gemini API for live AI', true);
+  } finally {
+    btn.classList.remove('loading'); btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════
+// RENDER ALL OUTPUTS
+// ══════════════════════════════════════════════════
+function renderAll(d) {
+  renderPromo(d.promo);
+  renderEmail(d.email);
+  renderWA(d.whatsapp);
+  renderIG(d.instagram, d.promo);
+  renderProducts(d.products);
+  renderInsights(d.insights);
+  renderSidePanel(d);
+  if (d.meta?.segment) updateSegBadge(d.meta.segment);
+}
+
+function renderPromo(p) {
+  if (!p) return;
+  document.getElementById('p-badge').textContent  = p.badge || 'HOT';
+  document.getElementById('p-hl').textContent     = p.headline || '—';
+  document.getElementById('p-sub').textContent    = p.subtext || '—';
+  document.getElementById('p-expiry').textContent = '⏱ ' + (p.expiry || '');
+  document.getElementById('p-cta-btn').textContent = p.cta || 'Shop Now →';
+  document.getElementById('promo-copy').value =
+    `${p.badge}\n${p.headline}\n${p.subtext}\n${p.expiry}\n${p.cta}`;
+}
+
+function switchAB(v) {
+  if (!lastOffer) return;
+  currentAB = v;
+  document.getElementById('ab-a').classList.toggle('on', v === 'a');
+  document.getElementById('ab-b').classList.toggle('on', v === 'b');
+  const src = v === 'a' ? lastOffer.promo : lastOffer.ab_variant;
+  if (src) renderPromo(src);
+}
+
+function renderEmail(e) {
+  if (!e) return;
+  document.getElementById('em-subj-preview').textContent = e.subject || '—';
+  document.getElementById('em-subj').textContent  = e.subject  || '—';
+  document.getElementById('em-prev').textContent  = e.preview  || '—';
+  document.getElementById('em-body').textContent  = e.body     || '—';
+  document.getElementById('email-copy').value =
+    `Subject: ${e.subject}\n\n${e.body}`;
+}
+
+function renderWA(msg) {
+  if (!msg) return;
+  const formatted = msg.replace(/\n/g, '<br>');
+  document.getElementById('wa-msg').innerHTML = formatted;
+  const now = new Date();
+  document.getElementById('wa-time').textContent =
+    now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) + ' · ✓✓';
+  document.getElementById('wa-copy').value = msg;
+}
+
+function renderIG(ig, promo) {
+  if (!ig) return;
+  const topCat = Object.entries(clicks).sort((a,b)=>b[1]-a[1])[0];
+  const meta = CATS.find(c => c.id === topCat?.[0]);
+  document.getElementById('ig-emoji').textContent  = meta?.icon || '🛍️';
+  document.getElementById('ig-story').textContent  = ig.story_text || (promo?.badge || 'HOT DEAL');
+  document.getElementById('ig-cap').innerHTML      = (ig.caption || '').replace(/#(\w+)/g,'<span class="ig-hashtags">#$1</span>');
+  document.getElementById('ig-copy').value         = ig.caption || '';
+}
+
+function renderProducts(prods) {
+  if (!prods || !prods.length) return;
+  const g = document.getElementById('prod-grid');
+  g.innerHTML = '';
+  prods.forEach(p => {
+    const tagKey = (p.tag || '').toUpperCase().replace(/\s/,'').replace('ARRIVAL','').replace('PICK','');
+    const tagClass = tagKey.includes('BEST') ? 'BESTSELLER'
+      : tagKey.includes('TREND') ? 'TRENDING'
+      : tagKey.includes('NEW') ? 'NEW' : 'STAFF';
+    const meta = CATS.find(c => c.id === p.category);
+    const card = document.createElement('div');
+    card.className = 'prod';
+    card.innerHTML = `
+      <div class="prod-img">
+        ${meta?.icon || '📦'}
+        <div class="prod-tag-badge ${tagClass}">${p.tag || 'TRENDING'}</div>
+      </div>
+      <div class="prod-body">
+        <div class="prod-cat">${p.category || '—'}</div>
+        <div class="prod-name">${p.name || '—'}</div>
+        <div class="prod-price-row">
+          <span class="prod-orig">${p.price || ''}</span>
+          <span class="prod-disc">${p.discounted_price || ''}</span>
+        </div>
+        <div class="prod-stars">★ ${p.rating || '4.5'} <span style="color:var(--muted)">(${p.reviews || 0} reviews)</span></div>
+        <div class="prod-reason">${p.reason || ''}</div>
+        <button class="prod-add" onclick="toast('🛒 Added to cart!')">Add to Cart</button>
+      </div>`;
+    g.appendChild(card);
+  });
+}
+
+function renderInsights(ins) {
+  if (!ins) return;
+  const ps = ins.personalization_score || 0;
+  const cv = ins.conversion_probability || 0;
+  document.getElementById('i-pscore').textContent = ps + '%';
+  document.getElementById('i-conv').textContent   = cv + '%';
+  document.getElementById('i-time').textContent   = ins.best_send_time   || '—';
+  document.getElementById('i-trigger').innerHTML  = `<span class="trigger-badge">${ins.primary_trigger || '—'}</span>`;
+  document.getElementById('i-segnote').textContent = ins.segment_note     || '—';
+  document.getElementById('i-upsell').textContent  = ins.upsell_hint      || '—';
+  setTimeout(() => {
+    document.getElementById('i-pbar').style.width = ps + '%';
+    document.getElementById('i-cbar').style.width = cv + '%';
+  }, 100);
+}
+
+function renderSidePanel(d) {
+  const p = d.promo || {}; const m = d.meta || {}; const ins = d.insights || {};
+  document.getElementById('sp-disc').textContent  = p.discount ? p.discount + '%' : '—';
+  document.getElementById('sp-brand').textContent = p.brand || '—';
+  document.getElementById('sp-save').textContent  = p.savings_amount ? '₹' + p.savings_amount + ' saved' : '';
+
+  const si = m.segment_info || {};
+  document.getElementById('sp-seg-icon').textContent = si.icon  || '⚡';
+  document.getElementById('sp-seg-name').textContent = m.segment || '—';
+  document.getElementById('sp-seg-desc').textContent = si.desc   || '—';
+
+  const ps = ins.personalization_score || 0;
+  const cv = ins.conversion_probability || 0;
+  document.getElementById('sp-score').textContent = ps ? ps + '%' : '—';
+  document.getElementById('sp-conv').textContent  = cv ? cv + '%' : '—';
+  setTimeout(() => {
+    document.getElementById('sp-sbar').style.width = ps + '%';
+    document.getElementById('sp-cbar').style.width = cv + '%';
+  }, 200);
+}
+
+// ══════════════════════════════════════════════════
+// DEMO FALLBACK
+// ══════════════════════════════════════════════════
+function renderDemo() {
+  const top = Object.entries(clicks).sort((a,b)=>b[1]-a[1])[0];
+  const meta = CATS.find(c => c.id === top?.[0]) || CATS[0];
+  const d = {
+    promo: {badge:'TODAY', headline:`🔥 Exclusive ${meta.name} Deals!`,
+      subtext:`You've shown real interest in ${meta.name.toLowerCase()} — grab 20% off top picks today only.`,
+      discount:'20', brand: meta.brand.split('·')[0].trim(), cta:'Shop Now →',
+      savings_amount:'1,400', expiry:'Ends at midnight tonight'},
+    ab_variant: {badge:'FLASH', headline:`⚡ Last Chance — ${meta.name} Sale`,
+      subtext:`Don't miss your window — ${meta.name} prices dropping NOW for the next 2 hours.`,
+      cta:'Grab the Deal →', discount:'22'},
+    email: {subject:`${meta.icon} Your exclusive ${meta.name} offer expires tonight`,
+      preview:'Don\'t let this deal slip away…',
+      body:`Hi there! We noticed you've been exploring ${meta.name.toLowerCase()} on our platform.\n\nBased on your interests, we've curated an exclusive 20% discount on top ${meta.name.toLowerCase()} picks from ${meta.brand.split('·')[0].trim()}.\n\nThis offer is valid for today only — don't miss out. Click below to explore your personalized picks.\n\nHappy Shopping! 🛍️\n— Team PERSONA`},
+    whatsapp: `Hey! 👋 Spotted you checking out ${meta.name.toLowerCase()} 😍\n\nWe've got an *exclusive 20% OFF* on ${meta.brand.split('·')[0].trim()} today only! ⚡\n\nGrab it before it's gone 👉 [LINK] 🔥`,
+    instagram: {caption: `Your ${meta.name.toLowerCase()} era is calling ✨\n\nExclusive 20% off – today only. Link in bio 🔗\n\n#${meta.name}Sale #ExclusiveDeals #PERSONA #ShopNow #LimitedOffer #TodayOnly #${meta.name}`,
+      story_text: `20% OFF ${meta.name.toUpperCase()} 🔥`},
+    products: [
+      {name:`${meta.brand.split('·')[0].trim()} Premium ${meta.name} Pro`, category: top?.[0] || 'sports',
+        price:'₹4,999', discounted_price:'₹3,999', rating:'4.7', reviews:'2340', tag:'BESTSELLER',
+        reason:`Perfect match for your ${meta.name.toLowerCase()} interest with top ratings.`},
+      {name:`${meta.brand.split('·')[1]?.trim() || 'Classic'} ${meta.name} Edition`, category: top?.[0] || 'fashion',
+        price:'₹3,499', discounted_price:'₹2,799', rating:'4.5', reviews:'1200', tag:'TRENDING',
+        reason:`A fan favourite that's been flying off shelves this week.`},
+      {name:`${meta.name} Essentials Bundle`, category: top?.[0] || 'home',
+        price:'₹6,999', discounted_price:'₹5,599', rating:'4.8', reviews:'890', tag:'NEW ARRIVAL',
+        reason:`Our top recommendation for ${meta.name.toLowerCase()} lovers like you.`},
+    ],
+    insights: {personalization_score:82, conversion_probability:67,
+      best_send_time:'Tonight at 8 PM', primary_trigger:'FOMO',
+      segment_note:`This user responds to urgency-based triggers and flash deals.`,
+      upsell_hint:`Consider suggesting a warranty plan or accessories bundle with this category.`},
+    meta: {segment:'Impulse Buyer', segment_info:{icon:'⚡', desc:'Responds to flash deals and FOMO triggers'},
+      engagement:'hot', generated_at: new Date().toLocaleString()}
+  };
+  lastOffer = d;
+  renderAll(d);
+}
+
+// ══════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════
+document.getElementById('tab-nav').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  setTab(btn.dataset.tab);
+});
+function setTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('on', b.dataset.tab === id));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('on', p.id === 'tab-' + id));
+}
+
+// ══════════════════════════════════════════════════
+// COPY
+// ══════════════════════════════════════════════════
+function copyField(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.value).then(() => {
+    const btn = event.target.closest('.btn-copy');
+    if (btn) { btn.textContent = '✅ Copied!'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = '📋 Copy'; btn.classList.remove('copied'); }, 2000); }
+    toast('📋 Copied to clipboard!');
+  });
+}
+
+// ══════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════
+let tt;
+function toast(msg, warn = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = warn ? '#FFD166' : 'var(--a3)';
+  t.classList.add('show');
+  clearTimeout(tt);
+  tt = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════════════
+// CURSOR AURA
+// ══════════════════════════════════════════════════
+const aura = document.getElementById('aura');
+document.addEventListener('mousemove', e => {
+  aura.style.left = e.clientX + 'px';
+  aura.style.top  = e.clientY + 'px';
+});
+</script>
+</body>
+</html>
