@@ -1,0 +1,11 @@
+# Never commit your real API keys to GitHub!
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+env/
+
+# Vercel
+.vercel/
