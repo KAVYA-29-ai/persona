@@ -126,7 +126,8 @@ def infer_segment(prefs: dict[str, int]) -> str:
     top_cat = ranked[0][0]
     total = sum(prefs.values())
     div = diversity_score(prefs)
-    if div > 0.8:                                return "Research-First"
+    num_cats = len(prefs)
+    if div > 0.8 and num_cats >= 3:              return "Research-First"
     if top_cat in ("electronics", "gaming"):     return "Research-First"
     if top_cat in ("fashion", "beauty"):         return "Trend Follower"
     if top_cat in ("shoes", "sports"):           return "Experience Buyer"
