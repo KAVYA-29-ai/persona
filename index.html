@@ -725,7 +725,10 @@ async function runGenerate() {
 
   try {
     const r = await fetch(`${API}/generate-offer/${USER_ID}`);
-    if (!r.ok) throw new Error(await r.text());
+    if (!r.ok) {
+      const errorText = await r.text();
+      throw new Error(errorText || r.statusText || 'API request failed');
+    }
     const d = await r.json();
     lastOffer = d;
     currentAB = 'a';
@@ -737,12 +740,13 @@ async function runGenerate() {
     setTab('promo');
     toast('✦ 8 personalized outputs generated!');
   } catch (e) {
+    console.error('Generate offer failed:', e);
     renderDemo();
     offersGenerated++;
     document.getElementById('s-offers').textContent = offersGenerated;
     document.getElementById('out-sec').style.display = 'block';
     document.getElementById('out-sec').scrollIntoView({behavior:'smooth'});
-    toast('⚠️ Demo outputs shown — connect Gemini API for live AI', true);
+    toast(`⚠️ Live AI failed: ${e.message}`, true);
   } finally {
     btn.classList.remove('loading'); btn.disabled = false;
   }

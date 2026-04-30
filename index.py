@@ -49,6 +49,246 @@ def sb() -> Client:
         raise HTTPException(500, "SUPABASE_URL / SUPABASE_KEY not set.")
     return create_client(url, key)
 
+
+SUPABASE_READY = bool(os.environ.get("SUPABASE_URL") and os.environ.get("SUPABASE_KEY"))
+
+LOCAL_TABLES: dict[str, list[dict]] = {
+    "user_events": [],
+    "user_preferences": [],
+    "offer_history": [],
+    "wishlist": [],
+}
+
+LOCAL_NEXT_IDS: dict[str, int] = {name: 1 for name in LOCAL_TABLES}
+
+GEMINI_MODELS = [
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash",
+]
+
+
+def call_gemini(prompt: str) -> str:
+    client = gemini()
+    last_error: Optional[Exception] = None
+    for model in GEMINI_MODELS:
+        try:
+            print(f"DEBUG: Attempting Gemini call with model {model}...")
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt,
+            )
+            text = getattr(response, "text", "")
+            if text and text.strip():
+                print(f"DEBUG: Successfully got response from {model}")
+                return text.strip()
+
+            print(f"DEBUG: Empty response from {model}")
+            last_error = Exception(f"Empty response from {model}")
+        except Exception as exc:
+            last_error = exc
+            err_text = str(exc).lower()
+            print(f"DEBUG: Model {model} failed: {err_text}")
+
+            # If it's a quota error, try next model
+            if any(term in err_text for term in ["resource_exhausted", "quota", "429", "402"]):
+                continue
+
+            # If it's a specific API error that's not quota, maybe stop
+            if "not found" in err_text or "invalid" in err_text:
+                continue
+
+            # If we have other models to try, continue
+            continue
+
+    if last_error:
+        err_msg = str(last_error)
+        if "429" in err_msg or "quota" in err_msg.lower() or "402" in err_msg:
+            raise HTTPException(
+                status_code=429,
+                detail="Gemini API quota exhausted. Please check your AI Studio billing or wait a minute."
+            )
+        raise HTTPException(status_code=502, detail=f"Gemini API Error: {err_msg}")
+
+    raise HTTPException(status_code=503, detail="Gemini service unavailable.")
+
+
+def _utc_now() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def _local_insert(table: str, row: dict) -> dict:
+    record = dict(row)
+    record.setdefault("id", LOCAL_NEXT_IDS[table])
+    LOCAL_NEXT_IDS[table] += 1
+    record.setdefault("created_at", _utc_now())
+    LOCAL_TABLES[table].append(record)
+    return record
+
+
+def _local_rows(
+    table: str,
+    *,
+    user_id: Optional[str] = None,
+    order_desc: bool = False,
+    limit: Optional[int] = None,
+) -> list[dict]:
+    rows = [dict(row) for row in LOCAL_TABLES[table]]
+    if user_id is not None:
+        rows = [row for row in rows if row.get("user_id") == user_id]
+    if order_desc:
+        rows = sorted(rows, key=lambda row: row.get("created_at", ""), reverse=True)
+    if limit is not None:
+        rows = rows[:limit]
+    return rows
+
+
+def _local_delete(table: str, **filters) -> int:
+    kept: list[dict] = []
+    removed = 0
+    for row in LOCAL_TABLES[table]:
+        if all(row.get(key) == value for key, value in filters.items()):
+            removed += 1
+            continue
+        kept.append(row)
+    LOCAL_TABLES[table] = kept
+    return removed
+
+
+def _local_upsert_pref(user_id: str, category: str) -> int:
+    for row in LOCAL_TABLES["user_preferences"]:
+        if row.get("user_id") == user_id and row.get("category") == category:
+            row["clicks"] = int(row.get("clicks", 1)) + 1
+            return row["clicks"]
+    _local_insert("user_preferences", {"user_id": user_id, "category": category, "clicks": 1})
+    return 1
+
+
+def _local_prefs(user_id: str) -> dict[str, int]:
+    prefs: dict[str, int] = {}
+    for row in _local_rows("user_preferences", user_id=user_id):
+        prefs[row["category"]] = int(row.get("clicks", 1))
+    return prefs
+
+
+def _persist_local_offer(user_id: str, segment: str, category: str) -> None:
+    _local_insert("offer_history", {"user_id": user_id, "segment": segment, "category": category})
+
+
+def _build_local_offer(
+    *,
+    user_id: str,
+    segment: str,
+    engage: str,
+    div: float,
+    top_cat: str,
+    top_meta: dict,
+    interest: str,
+    brands: list[str],
+    avg_price: int,
+    ranked: list[tuple[str, int]],
+) -> dict:
+    brand = brands[0] if brands else "Top Brand"
+    alt_brand = brands[1] if len(brands) > 1 else brand
+    cat2 = ranked[1][0] if len(ranked) > 1 else top_cat
+    cat3 = ranked[2][0] if len(ranked) > 2 else top_cat
+    discount = 20 if engage in ("hot", "super-engaged") else 18
+    savings_amount = int(round(avg_price * 70 * discount / 100))
+    headline_root = interest.title()
+    return {
+        "promo": {
+            "badge": "TODAY" if engage != "cold" else "NEW",
+            "headline": f"🔥 Exclusive {headline_root} Deals!",
+            "subtext": f"You've shown real interest in {interest} — grab {discount}% off top picks today only.",
+            "discount": str(discount),
+            "brand": brand,
+            "cta": "Shop Now →",
+            "savings_amount": f"{savings_amount:,}",
+            "expiry": "Ends at midnight tonight" if engage != "cold" else "Limited time offer",
+        },
+        "ab_variant": {
+            "badge": "FLASH",
+            "headline": f"⚡ Last Chance — {headline_root} Sale",
+            "subtext": f"Don't miss your window — {interest} prices are moving fast for the next few hours.",
+            "cta": "Grab the Deal →",
+            "discount": str(min(discount + 2, 35)),
+        },
+        "email": {
+            "subject": f"{top_meta.get('emoji', '✨')} Your exclusive {headline_root} offer expires tonight",
+            "preview": f"Don't let this deal slip away on {interest}.",
+            "body": (
+                f"Hi there! We noticed you've been exploring {interest} on our platform.\n\n"
+                f"Based on your interests, we've curated an exclusive {discount}% discount on top {interest} picks from {brand}.\n\n"
+                f"This offer is valid for today only — don't miss out. Click below to explore your personalized picks.\n\n"
+                f"Happy Shopping! 🛍️\n— Team PERSONA"
+            ),
+        },
+        "whatsapp": (
+            f"Hey! 👋 Spotted you checking out {interest} 😍\n\n"
+            f"We've got an *exclusive {discount}% OFF* on {brand} today only! ⚡\n\n"
+            f"Grab it before it's gone 👉 [LINK] 🔥"
+        ),
+        "instagram": {
+            "caption": (
+                f"Your {interest} era is calling ✨\n\n"
+                f"Exclusive {discount}% off – today only. Link in bio 🔗\n\n"
+                f"#PERSONA #ShopNow #LimitedOffer #TodayOnly #{top_cat.title()} #{segment.replace(' ', '')} #Deals"
+            ),
+            "story_text": f"{discount}% OFF {top_cat.upper()} 🔥",
+        },
+        "products": [
+            {
+                "name": f"{brand} Premium {headline_root} Pro",
+                "category": top_cat,
+                "price": f"₹{avg_price * 70:,}",
+                "discounted_price": f"₹{int(avg_price * 70 * (100 - discount) / 100):,}",
+                "rating": "4.7",
+                "reviews": 2340,
+                "tag": "BESTSELLER",
+                "reason": f"Perfect match for your {interest} interest with top ratings.",
+            },
+            {
+                "name": f"{alt_brand} {headline_root} Edition",
+                "category": cat2,
+                "price": f"₹{int(avg_price * 55):,}",
+                "discounted_price": f"₹{int(avg_price * 55 * (100 - discount) / 100):,}",
+                "rating": "4.5",
+                "reviews": 1200,
+                "tag": "TRENDING",
+                "reason": "A fan favourite that's been flying off shelves this week.",
+            },
+            {
+                "name": f"{headline_root} Essentials Bundle",
+                "category": cat3,
+                "price": f"₹{int(avg_price * 80):,}",
+                "discounted_price": f"₹{int(avg_price * 80 * (100 - discount) / 100):,}",
+                "rating": "4.8",
+                "reviews": 890,
+                "tag": "NEW ARRIVAL",
+                "reason": f"Our top recommendation for {interest} lovers like you.",
+            },
+        ],
+        "insights": {
+            "personalization_score": 82 if engage != "cold" else 68,
+            "conversion_probability": 67 if engage != "cold" else 48,
+            "best_send_time": "Tonight at 8 PM" if engage != "cold" else "Tomorrow afternoon",
+            "primary_trigger": "FOMO" if engage != "cold" else "Curiosity",
+            "segment_note": f"This {segment.lower()} profile responds to urgency-based triggers and tailored offers.",
+            "upsell_hint": f"Suggest accessories or a bundle that complements {interest} for a larger basket size.",
+        },
+        "meta": {
+            "user_id": user_id,
+            "segment": segment,
+            "segment_info": SEGMENTS.get(segment, {}),
+            "engagement": engage,
+            "top_category": top_cat,
+            "top_interest": interest,
+            "total_events": sum(count for _, count in ranked),
+            "diversity_score": div,
+            "generated_at": time.strftime("%H:%M, %d %b %Y"),
+            "fallback": True,
+        },
+    }
 # ── Static Metadata ────────────────────────────────────────────────────────────
 
 CATEGORY_META: dict[str, dict] = {
@@ -155,7 +395,12 @@ class WishlistAddReq(BaseModel):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "engine": "PERSONA v3 — Supabase + Gemini"}
+    return {
+        "status": "ok",
+        "engine": "PERSONA v3 — Supabase + Gemini",
+        "storage": "supabase" if SUPABASE_READY else "local-fallback",
+        "ai": "gemini" if os.environ.get("GEMINI_API_KEY") else "local-fallback",
+    }
 
 
 @app.post("/api/track-event")
@@ -166,11 +411,25 @@ async def track_event(req: TrackReq):
 
     # Persist to Supabase
     new_clicks = upsert_pref(req.user_id, cat)
-    sb().table("user_events").insert({
-        "user_id":  req.user_id,
-        "category": cat,
-        "brand":    brand,
-    }).execute()
+    try:
+        if SUPABASE_READY:
+            sb().table("user_events").insert({
+                "user_id":  req.user_id,
+                "category": cat,
+                "brand":    brand,
+            }).execute()
+        else:
+            _local_insert("user_events", {
+                "user_id": req.user_id,
+                "category": cat,
+                "brand": brand,
+            })
+    except Exception:
+        _local_insert("user_events", {
+            "user_id": req.user_id,
+            "category": cat,
+            "brand": brand,
+        })
 
     prefs = get_prefs(req.user_id)
     total = sum(prefs.values())
@@ -292,32 +551,44 @@ Return ONLY valid JSON — no markdown, no extra text, no code fences:
   }}
 }}"""
 
-    # ── Gemini call (new SDK) ──────────────────────────────────────────────────
-    client = gemini()
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt,
-    )
-    text = response.text.strip()
+    try:
+        # ── Gemini call (new SDK) ──────────────────────────────────────────────
+        text = call_gemini(prompt)
 
-    # Strip markdown fences if model wraps output anyway
-    if "```" in text:
-        text = "\n".join(
-            line for line in text.split("\n")
-            if not line.strip().startswith("```")
+        # Strip markdown fences if model wraps output anyway
+        if "```" in text:
+            text = "\n".join(
+                line for line in text.split("\n")
+                if not line.strip().startswith("```")
+            )
+
+        offer = json.loads(text.strip())
+    except Exception:
+        offer = _build_local_offer(
+            user_id=user_id,
+            segment=segment,
+            engage=engage,
+            div=div,
+            top_cat=top_cat,
+            top_meta=top_meta,
+            interest=interest,
+            brands=brands,
+            avg_price=avg_price,
+            ranked=ranked,
         )
 
-    try:
-        offer = json.loads(text.strip())
-    except json.JSONDecodeError as exc:
-        raise HTTPException(500, f"Gemini returned invalid JSON: {text[:400]}") from exc
-
     # ── Persist offer to history ───────────────────────────────────────────────
-    sb().table("offer_history").insert({
-        "user_id":  user_id,
-        "segment":  segment,
-        "category": top_cat,
-    }).execute()
+    try:
+        if SUPABASE_READY:
+            sb().table("offer_history").insert({
+                "user_id":  user_id,
+                "segment":  segment,
+                "category": top_cat,
+            }).execute()
+        else:
+            _persist_local_offer(user_id, segment, top_cat)
+    except Exception:
+        _persist_local_offer(user_id, segment, top_cat)
 
     offer["meta"] = {
         "user_id":       user_id,
@@ -329,6 +600,7 @@ Return ONLY valid JSON — no markdown, no extra text, no code fences:
         "total_events":  total,
         "diversity_score": div,
         "generated_at":  time.strftime("%H:%M, %d %b %Y"),
+        "fallback":      offer.get("meta", {}).get("fallback", False),
     }
     return offer
 
@@ -337,21 +609,35 @@ Return ONLY valid JSON — no markdown, no extra text, no code fences:
 async def dashboard(user_id: str):
     prefs  = get_prefs(user_id)
     total  = sum(prefs.values())
-    client = sb()
+    recent_brands: list[str] = []
+    offer_count = 0
+    if SUPABASE_READY:
+        try:
+            client = sb()
+            events_res = (
+                client.table("user_events")
+                .select("brand")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .limit(30)
+                .execute()
+            )
+            recent_brands = list(
+                dict.fromkeys(e["brand"] for e in (events_res.data or []) if e.get("brand"))
+            )[:5]
 
-    events_res = (
-        client.table("user_events")
-        .select("brand")
-        .eq("user_id", user_id)
-        .order("created_at", desc=True)
-        .limit(30)
-        .execute()
-    )
-    recent_brands = list(
-        dict.fromkeys(e["brand"] for e in events_res.data if e.get("brand"))
-    )[:5]
-
-    offers_res = client.table("offer_history").select("id").eq("user_id", user_id).execute()
+            offers_res = client.table("offer_history").select("id").eq("user_id", user_id).execute()
+            offer_count = len(offers_res.data or [])
+        except Exception:
+            recent_brands = list(
+                dict.fromkeys(row["brand"] for row in _local_rows("user_events", user_id=user_id, order_desc=True, limit=30) if row.get("brand"))
+            )[:5]
+            offer_count = len(_local_rows("offer_history", user_id=user_id))
+    else:
+        recent_brands = list(
+            dict.fromkeys(row["brand"] for row in _local_rows("user_events", user_id=user_id, order_desc=True, limit=30) if row.get("brand"))
+        )[:5]
+        offer_count = len(_local_rows("offer_history", user_id=user_id))
 
     segment = infer_segment(prefs)
     breakdown = [
@@ -375,54 +661,98 @@ async def dashboard(user_id: str):
         "diversity_score":   diversity_score(prefs),
         "category_breakdown": breakdown,
         "recent_brands":     recent_brands,
-        "offer_count":       len(offers_res.data),
+        "offer_count":       offer_count,
         "generated_at":      time.strftime("%H:%M, %d %b %Y"),
     }
 
 
 @app.get("/api/history/{user_id}")
 async def history(user_id: str):
-    res = (
-        sb().table("offer_history")
-        .select("*")
-        .eq("user_id", user_id)
-        .order("created_at", desc=True)
-        .limit(10)
-        .execute()
-    )
-    return {"history": res.data}
+    if SUPABASE_READY:
+        try:
+            res = (
+                sb().table("offer_history")
+                .select("*")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .limit(10)
+                .execute()
+            )
+            return {"history": res.data or []}
+        except Exception:
+            pass
+    return {"history": _local_rows("offer_history", user_id=user_id, order_desc=True, limit=10)}
 
 
 @app.post("/api/wishlist/add")
 async def wishlist_add(req: WishlistAddReq):
-    sb().table("wishlist").insert({
-        "user_id":          req.user_id,
-        "name":             req.name,
-        "category":         req.category,
-        "price":            req.price,
-        "discounted_price": req.discounted_price,
-        "rating":           req.rating,
-    }).execute()
+    try:
+        if SUPABASE_READY:
+            sb().table("wishlist").insert({
+                "user_id":          req.user_id,
+                "name":             req.name,
+                "category":         req.category,
+                "price":            req.price,
+                "discounted_price": req.discounted_price,
+                "rating":           req.rating,
+            }).execute()
+        else:
+            _local_insert("wishlist", {
+                "user_id":          req.user_id,
+                "name":             req.name,
+                "category":         req.category,
+                "price":            req.price,
+                "discounted_price": req.discounted_price,
+                "rating":           req.rating,
+            })
+    except Exception:
+        _local_insert("wishlist", {
+            "user_id":          req.user_id,
+            "name":             req.name,
+            "category":         req.category,
+            "price":            req.price,
+            "discounted_price": req.discounted_price,
+            "rating":           req.rating,
+        })
     return {"status": "added", "name": req.name}
 
 
 @app.get("/api/wishlist/{user_id}")
 async def wishlist_get(user_id: str):
-    res = sb().table("wishlist").select("*").eq("user_id", user_id).execute()
-    return {"wishlist": res.data}
+    if SUPABASE_READY:
+        try:
+            res = sb().table("wishlist").select("*").eq("user_id", user_id).execute()
+            return {"wishlist": res.data or []}
+        except Exception:
+            pass
+    return {"wishlist": _local_rows("wishlist", user_id=user_id)}
 
 
 @app.delete("/api/wishlist/{user_id}/{name}")
 async def wishlist_remove(user_id: str, name: str):
-    sb().table("wishlist").delete().eq("user_id", user_id).eq("name", name).execute()
+    try:
+        if SUPABASE_READY:
+            sb().table("wishlist").delete().eq("user_id", user_id).eq("name", name).execute()
+        else:
+            _local_delete("wishlist", user_id=user_id, name=name)
+    except Exception:
+        _local_delete("wishlist", user_id=user_id, name=name)
     return {"status": "removed", "name": name}
 
 
 @app.delete("/api/reset/{user_id}")
 async def reset_user(user_id: str):
-    client = sb()
-    for table in ("user_events", "user_preferences", "offer_history", "wishlist"):
-        client.table(table).delete().eq("user_id", user_id).execute()
+    try:
+        if SUPABASE_READY:
+            client = sb()
+            for table in ("user_events", "user_preferences", "offer_history", "wishlist"):
+                client.table(table).delete().eq("user_id", user_id).execute()
+        else:
+            for table in ("user_events", "user_preferences", "offer_history", "wishlist"):
+                _local_delete(table, user_id=user_id)
+    except Exception:
+        for table in ("user_events", "user_preferences", "offer_history", "wishlist"):
+            _local_delete(table, user_id=user_id)
     return {"status": "reset", "user_id": user_id}
 
 

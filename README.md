@@ -28,6 +28,8 @@
 
 **No database. No login. No setup headaches.** Just browse, click, and watch the AI work.
 
+If Gemini or Supabase is unavailable, the app now falls back to a deterministic local mode so the site stays usable instead of returning repeated 500/502 errors.
+
 ### How It Works in 4 Steps
 
 ```
@@ -151,7 +153,7 @@ git push -u origin main
 4. Leave all settings as default
 5. Click **Deploy**
 
-> First deploy succeeds but AI won't work yet — you need to add your API key next.
+> First deploy succeeds even if external services are not configured. For live AI and persistence, add the environment variables in the next step.
 
 ---
 
@@ -167,6 +169,8 @@ Value:  AIzaSy...your-actual-key...
 
 3. Check all environments: **Production ✓  Preview ✓  Development ✓**
 4. Click **Save**
+
+If you also want browsing state, history, and wishlist persistence, add the Supabase variables from the deployment guide as well.
 
 ---
 
@@ -200,6 +204,10 @@ uvicorn api.index:app --reload --port 8000
 # 4. Open browser
 open http://localhost:8000
 ```
+
+## CI
+
+The repository includes a GitHub Actions workflow at [.github/workflows/ci.yml](.github/workflows/ci.yml) that installs dependencies, byte-compiles the backend, and runs a simple import smoke test on every push and pull request.
 
 ---
 

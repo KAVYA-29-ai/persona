@@ -172,6 +172,8 @@ Add all three, checking **Production ✓ Preview ✓ Development ✓** for each:
 
 After saving → go to **Deployments tab** → click **⋯** on the latest → **Redeploy**
 
+> If these variables are missing or Gemini quota is exhausted, the backend now switches to a local fallback so the site keeps running. Add the variables above to restore live AI and database persistence.
+
 ---
 
 ## Step 7 — Verify It Works
@@ -194,6 +196,10 @@ Expected response:
 
 **Verify Supabase data:**
 Supabase → Table Editor → check `user_events` and `user_preferences` — rows should appear after clicking categories.
+
+## CI Pipeline
+
+This repo also includes [.github/workflows/ci.yml](.github/workflows/ci.yml), which runs on push and pull request, installs dependencies, byte-compiles `index.py`, and performs a lightweight import smoke test.
 
 ---
 
@@ -220,7 +226,7 @@ open http://localhost:8000
 | Data not saving after refresh | `SUPABASE_URL` or `SUPABASE_KEY` missing — check env vars |
 | 404 on `/api/*` routes | `vercel.json` missing or wrong rewrites block |
 | `ModuleNotFoundError: google.genai` | `requirements.txt` not updated — replace and Redeploy |
-| JSON parse error from Gemini | Temporary — retry. If persistent, check your Gemini API quota |
+| JSON parse error from Gemini | The backend now falls back automatically; if you want live AI, check your Gemini API quota and billing |
 
 ---
 
