@@ -19,7 +19,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from google import genai
+import google.generativeai as genai
 from supabase import create_client, Client
 from mangum import Mangum
 
@@ -36,12 +36,12 @@ app.add_middleware(
 
 # ── Clients (initialised per-request — safe for serverless cold starts) ────────
 
-def gemini() -> genai.Client:
+def gemini() -> genai:
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
         raise HTTPException(500, "GEMINI_API_KEY not set in environment variables.")
-    return genai.Client(api_key=key)
-
+    genai.configure(api_key=key)
+    return genai
 def sb() -> Client:
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_KEY")
@@ -62,43 +62,35 @@ LOCAL_TABLES: dict[str, list[dict]] = {
 LOCAL_NEXT_IDS: dict[str, int] = {name: 1 for name in LOCAL_TABLES}
 
 GEMINI_MODELS = [
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-2.5-flash",
     "gemini-2.0-flash",
 ]
 
 
 def call_gemini(prompt: str) -> str:
-    client = gemini()
+    api = gemini()
     last_error: Optional[Exception] = None
-    for model in GEMINI_MODELS:
+    for model_name in GEMINI_MODELS:
         try:
-            print(f"DEBUG: Attempting Gemini call with model {model}...")
-            response = client.models.generate_content(
-                model=model,
-                contents=prompt,
-            )
+            print(f"DEBUG: Attempting Gemini call with model {model_name}...")
+            model = api.GenerativeModel(model_name)
+            response = model.generate_content(prompt)
             text = getattr(response, "text", "")
             if text and text.strip():
-                print(f"DEBUG: Successfully got response from {model}")
+                print(f"DEBUG: Successfully got response from {model_name}")
                 return text.strip()
 
-            print(f"DEBUG: Empty response from {model}")
-            last_error = Exception(f"Empty response from {model}")
+            print(f"DEBUG: Empty response from {model_name}")
+            last_error = Exception(f"Empty response from {model_name}")
         except Exception as exc:
             last_error = exc
             err_text = str(exc).lower()
-            print(f"DEBUG: Model {model} failed: {err_text}")
+            print(f"DEBUG: Model {model_name} failed: {err_text}")
 
-            # If it's a quota error, try next model
             if any(term in err_text for term in ["resource_exhausted", "quota", "429", "402"]):
                 continue
-
-            # If it's a specific API error that's not quota, maybe stop
             if "not found" in err_text or "invalid" in err_text:
                 continue
-
-            # If we have other models to try, continue
             continue
 
     if last_error:
@@ -601,6 +593,7 @@ Return ONLY valid JSON — no markdown, no extra text, no code fences:
         "diversity_score": div,
         "generated_at":  time.strftime("%H:%M, %d %b %Y"),
         "fallback":      offer.get("meta", {}).get("fallback", False),
+        "ai_mode":       "local-fallback" if offer.get("meta", {}).get("fallback", False) else "gemini",
     }
     return offer
 
